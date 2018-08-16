@@ -50,7 +50,7 @@ LIB_OBJS	+= $(addprefix $(OBJDIR)/,$(LOCAL_LIB_ASM))
 INC		= -I$(CMSIS_INC) -I$(HAL_INC) -I$(CMSIS_DEV_INC) -I$(INCDIR)
 
 # Build Arguments
-CFLAGS		 = -std=c11 -mcpu=$(CPU) -Wall -D$(MCU) -mthumb -fno-common -Os
+CFLAGS	= -std=c99 -Wall -fno-common -mthumb -mcpu=$(CPU) -DSTM32F103xB --specs=nosys.specs -g -Wa,-ahlms=$(addprefix $(OBJDIR)/,$(notdir $(<:.c=.lst)))
 CFLAGS		+= $(INC)
 ASFLAGS		 = -mcpu=$(CPU)
 LFLAGS		 = -T$(LDSCRIPT) -mthumb -mcpu=$(CPU) --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
@@ -62,28 +62,32 @@ RM	= rm -rf
 all:: $(BINDIR)/$(PROJECT).bin $(BINDIR)/$(PROJECT).hex 
 
 $(BINDIR)/$(PROJECT).bin: $(BINDIR)/$(PROJECT).elf
-	$(OBJCOPY) --strip-unneeded -O binary $< $@
+	$(OBJCOPY) -R .stack --strip-unneeded -O binary $< $@
 
 $(BINDIR)/$(PROJECT).hex: $(BINDIR)/$(PROJECT).elf
 	$(OBJCOPY) -O ihex $< $@
 
 $(BINDIR)/$(PROJECT).elf: $(LIB_OBJS) $(OBJDIR)/hal.a 
+	@echo "Creating $(PROJECT).elf"
 	@mkdir -p $(dir $@)
 	$(CC)  $^ $(LFLAGS) -o $(BINDIR)/$(PROJECT).elf
 	$(OBJDUMP) -D $(BINDIR)/$(PROJECT).elf > $(BINDIR)/$(PROJECT).lst
 	$(SIZE) $(BINDIR)/$(PROJECT).elf
 
 $(OBJDIR)/hal.a: $(HAL_OBJ_SRC)
+	@echo "Creating core lib (hal.a)"
 	@mkdir -p $(dir $@)
 	$(CC) $(HAL_OBJ_SRC) $(CFLAGS) -c 
 	$(AR) rcs $@ $(HAL_LOCAL_LIB_OBJS)
 	@rm -f $(HAL_LOCAL_LIB_OBJS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@echo "Compiling c source files in src"
 	@mkdir -p $(dir $@)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s
+	@echo "Compiling asm files in src"
 	@mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -o $@ $<
 
@@ -95,5 +99,5 @@ cleanall:
 	@rm -rf $(OBJDIR)/*
 	@rm -f  $(HAL_LOCAL_LIB_OBJS)
 
-flash:
-	@st-flash --reset write $(BINDIR)/$(PROJECT).bin 0x08000000
+flash: $(BINDIR)/$(PROJECT).bin
+	@st-flash write $(BINDIR)/$(PROJECT).bin 0x08000000
