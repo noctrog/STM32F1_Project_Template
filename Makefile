@@ -53,7 +53,7 @@ INC		= -I$(CMSIS_INC) -I$(HAL_INC) -I$(CMSIS_DEV_INC) -I$(INCDIR)
 CFLAGS		 = -std=c11 -mcpu=$(CPU) -Wall -D$(MCU) -mthumb -fno-common -Os
 CFLAGS		+= $(INC)
 ASFLAGS		 = -mcpu=$(CPU)
-LFLAGS		 = -T$(LDSCRIPT) -mthumb -mcpu=$(CPU) --specs=nano.specs --specs=rdimon.specs -lc -lc -lrdimon -Wl,--gc-sections
+LFLAGS		 = -T$(LDSCRIPT) -mthumb -mcpu=$(CPU) --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
 
 RM	= rm -rf
 
@@ -67,7 +67,7 @@ $(BINDIR)/$(PROJECT).bin: $(BINDIR)/$(PROJECT).elf
 $(BINDIR)/$(PROJECT).hex: $(BINDIR)/$(PROJECT).elf
 	$(OBJCOPY) -O ihex $< $@
 
-$(BINDIR)/$(PROJECT).elf: $(OBJDIR)/hal.a $(LIB_OBJS)
+$(BINDIR)/$(PROJECT).elf: $(LIB_OBJS) $(OBJDIR)/hal.a 
 	@mkdir -p $(dir $@)
 	$(CC)  $^ $(LFLAGS) -o $(BINDIR)/$(PROJECT).elf
 	$(OBJDUMP) -D $(BINDIR)/$(PROJECT).elf > $(BINDIR)/$(PROJECT).lst
