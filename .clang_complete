@@ -1,0 +1,9 @@
+-Icmsis/include
+-Ihal/include
+-Icmsis/device/include
+-Iinclude
+-DSTM32F103xB
+-std=c99
+-Wall
+-Wa,-ahlms=obj/main.lst
+-Wl,--gc-sections
